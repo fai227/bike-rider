@@ -1,0 +1,26 @@
+{
+   "week": [
+      {
+         "name": "ファイ",
+         "distance": "200"
+      }
+   ],
+   "all": [
+      {
+         "name": "ファイ",
+         "distance": "1000"
+      },
+      {
+         "name": "ファイ",
+         "distance": "200"
+      },
+      {
+         "name": "ファイ",
+         "distance": "200"
+      },
+      {
+         "name": "ファイ",
+         "distance": "200"
+      }
+   ]
+}
