@@ -1,8 +1,8 @@
 {
-  "name": "chari-de-kita",
+  "name": "bike-rider",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "start": "node main.js"
   },

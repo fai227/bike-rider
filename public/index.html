@@ -5,11 +5,35 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>チャリで来た‼</title>
+    <title>Bike Rider</title>
+    <meta name="description" content="Simple Bike Game">
+    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
-
+    <div id="wrapper">
+        <div id="titleText" class="bigFont bigMargin">
+            - BIKE RIDER -
+        </div>
+        <div>
+            <input type="text" placeholder="Player Name" maxlength="10" id="nameInput" class="normalFont pencilBorder">
+        </div>
+        <div>
+            <button id="startButton" onclick="GameStart()" class="normalFont pencilBorder">Start Game</button>
+        </div>
+        <hr class="pencilBorder" id="hr">
+        <div>
+            <div class="normalFont" id="rankingText">Ranking</div>
+            <table class="smallFont">
+                <tr>
+                    <td>Loading Ranking...</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <canvas id="canvas" class="pencilBorder" style="display: none; opacity: 0;"></canvas>
 </body>
+
+<script defer src="./script.js"></script>
 
 </html>

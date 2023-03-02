@@ -1,25 +1,33 @@
 {
    "week": [
       {
-         "name": "ファイ",
+         "name": "0123456789",
+         "distance": "123456789"
+      },
+      {
+         "name": "fai",
          "distance": "200"
       }
    ],
-   "all": [
+   "total": [
       {
-         "name": "ファイ",
+         "name": "0123456789",
+         "distance": "123456789"
+      },
+      {
+         "name": "Fai",
          "distance": "1000"
       },
       {
-         "name": "ファイ",
+         "name": "Fai",
          "distance": "200"
       },
       {
-         "name": "ファイ",
+         "name": "faa",
          "distance": "200"
       },
       {
-         "name": "ファイ",
+         "name": "aaa",
          "distance": "200"
       }
    ]

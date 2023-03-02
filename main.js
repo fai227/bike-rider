@@ -19,7 +19,7 @@ app.post("/ranking", (req, res) => {
     if (req.body.distance == undefined) throw new Error("The distance is undefined.");
 
     UpdateWeek(req.body);
-    UpdateAll(req.body);
+    UpdateTotal(req.body);
 
     res.send(ranking);
 });
@@ -62,20 +62,20 @@ function DeleteWeek() {
 }
 
 // 全体ランキング更新関数
-function UpdateAll(data) {
-    if (ranking.all.length >= RANKING_NUM)  // ランキングが最大を超えるとき
-        if (Number(ranking.all[RANKING_NUM - 1].distance) >= Number(data.distance))  // ランキングの最後の数値のほうが大きいとき
+function UpdateTotal(data) {
+    if (ranking.total.length >= RANKING_NUM)  // ランキングが最大を超えるとき
+        if (Number(ranking.total[RANKING_NUM - 1].distance) >= Number(data.distance))  // ランキングの最後の数値のほうが大きいとき
             return;  // ランキングには入らない
 
-    ranking.all.push(data);  // ランキングに入れる
+    ranking.total.push(data);  // ランキングに入れる
 
     // ランキングソート
-    ranking.all = ranking.all.sort((a, b) => {
+    ranking.total = ranking.total.sort((a, b) => {
         return Number(b.distance) - Number(a.distance);
     });
 
     // 切り出し
-    ranking.all = ranking.all.slice(0, RANKING_NUM);
+    ranking.total = ranking.total.slice(0, RANKING_NUM);
 
     // 書き込み
     fs.writeFileSync("ranking.json", JSON.stringify(ranking, null, 3));
