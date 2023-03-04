@@ -10,16 +10,42 @@ const Jump = new Image(); Jump.src = "./images/jump.png";
 const Fall = new Image(); Fall.src = "./images/fall.png";
 const Up = new Image(); Up.src = "./images/up.png";
 const Down = new Image(); Down.src = "./images/down.png";
+const Explosions = []; for (let i = 0; i < 20; i++) { Explosions[i] = new Image(); Explosions[i].src = `./images/explosion/${i}.png` }
+const VolumeUrl = "./images/speakerN.png";
+
+// 音楽
+const Audios = [];
+
+const BGM = new Audio(); BGM.onloadeddata = BGMLoaded; BGM.onended = StartBGM; Audios.push(BGM);
+const BgmUrl = "./audios/bgmN.mp3";
+const BgmLength = 4;
+let bgmNum = -1;
+
+// 効果音
+let JumpAudio = new Audio(); JumpAudio.src = "./audios/jump.mp3"; Audios.push(JumpAudio);
+const DeathAudio = new Audio(); DeathAudio.src = "./audios/death.mp3"; Audios.push(DeathAudio);
 
 // 定数設定
 const BlockNum = 50;
 const BikePosition = 14;
 const RotationThreshold = 0.25;
+
 const MaxJump = 3;
 const MoveSpeed = 30;
-const JumpPower = 0.5;
-const Gravity = 2;
+
+const JumpPower = 70;
+const Gravity = 250;
+
 const ScoreRatio = 50;
+
+const ExplosionInterval = 0.1;
+const ExplosionSize = 100;
+
+const MaxDif = 10;
+const MaxSlope = 0.5;
+const MaxDistance = 30;
+
+const MaxHallRatio = 2;
 
 // プレイヤーの状態
 const PlayerState = {
@@ -31,11 +57,22 @@ const PlayerState = {
 }
 
 let field = [];
+let gameover = false;
 
 async function Start() {
-    await SetRanking();
-    SetUsername();
+    let tmpVolume = localStorage.getItem("Volume");
+    if (tmpVolume != undefined) {
+        volume = Number(tmpVolume);
+    }
+    else {
+        volume = 0;
+    }
+    SetVolume();
 
+    await SetRanking();  // ランキング表示
+    SetUsername();  // ユーザー名表示
+
+    // 盤面初期化
     for (let i = 0; i < BlockNum * 3; i++) field.push(0);
     playerPosition = { x: 0, y: 0 };
     playerState = PlayerState.Normal;
@@ -48,30 +85,51 @@ function Update(time) {
     // 左右移動計算
     playerPosition.x += deltaTime * MoveSpeed;
     while (playerPosition.x >= 1) {
+        if (field[BikePosition + 1] > playerPosition.y + MaxSlope) {  // 死亡判定
+            gameover = true;
+            break;
+        }
         playerPosition.x -= 1;
         field.shift();
+
+        // 上下の再計算
+        if (field[BikePosition] < playerPosition.y - MaxSlope) {  // 落ちる
+            if (playerState != PlayerState.Jump && playerState != PlayerState.Fall) {
+                acceleration = 0;
+                playerState = PlayerState.Fall;
+            }
+        }
+        else {
+            playerPosition.y = field[BikePosition];
+        }
+
         while (field.length < BlockNum * 2) {
             GenerateField();
         }
     }
 
+    if (gameover) {
+        Death();
+        return;
+    }
+
     // 上下移動計算
     if (playerState == PlayerState.Jump || playerState == PlayerState.Fall) {
         acceleration -= Gravity * deltaTime;
-        playerPosition.y += acceleration;
+        playerPosition.y += acceleration * deltaTime;
 
         // 下に落ちているかどうか
         if (acceleration < 0) playerState = PlayerState.Fall;
 
         // 着地判定
         if (playerPosition.y <= field[BikePosition]) {
+            playerPosition.y = field[BikePosition];
             playerState = PlayerState.Normal;
         }
     }
 
     // 表示計算
     if (playerState != PlayerState.Jump && playerState != PlayerState.Fall) {
-        playerPosition.y = field[BikePosition];  // 位置を設定
         jumpNum = MaxJump;
 
         let dif = playerPosition.x > 1 / 2 ? field[BikePosition + 1] - field[BikePosition] : field[BikePosition] - field[BikePosition - 1];
@@ -93,62 +151,59 @@ function Update(time) {
     requestAnimationFrame(Update);
 }
 
-const MaxDif = 10;
 function GenerateField() {
-    let level = Math.log10(score + 1);  // 5ぐらいがめっちゃムズイ
-    let latestHeight = field[field.length - 1];
+    // 地面を生成
     let tmpField = [];
+    let startPosition = field[field.length - 1];
+    while (tmpField.length < BlockNum) {  // 一面完成するまで実行
+        // スタート位置
+        if (Math.random() > 0.9) {  // 1/10で段差がずれる
+            let tmpStartPosition = startPosition;
+            startPosition += RandomRange(0, MaxDif);
 
-    // フィールドの中からlevelの数だけ点を取る
-    let points = [];
-    while (points.length < level) {
-        let point = Math.floor(Math.random() * BlockNum);
-        if (!points.includes(point)) {
-            points.push(point);
+            if (startPosition >= BlockNum) startPosition = tmpStartPosition - RandomRange(0, MaxDif);
+        }
+
+        // 傾き設置
+        let distance = RandomRange(0, MaxDistance);
+        let slope = RandomRange(-MaxSlope, MaxSlope);
+        for (let i = 0; i < distance; i++) {
+            let position = startPosition + slope;
+            if (position < 0 || position >= BlockNum) break;
+            tmpField.push(position);
+            startPosition = position;
         }
     }
-    points.sort((a, b) => { return a - b; });
-    if (!points.includes(BlockNum - 1)) points.push(BlockNum - 1);
 
-    // 高さ指定
-    points.forEach(item => {
-        while (true) {
-            let tmpHeight = Math.random() * BlockNum;
-            if (Math.abs(tmpHeight - latestHeight) < MaxDif) {
-                latestHeight = tmpHeight;
-                tmpField[item] = tmpHeight;
+    // 穴を空ける
+    let level = Math.log10(score + 10);  // レベル
+    let holl = Math.random() * level;  // 穴の数を設定
+    for (let i = 0; i < holl; i++) {
+        let hollLength = Math.random() * level * MaxHallRatio;  // 穴の長さを設定
+        let startPosition = Math.floor(Math.random() * tmpField.length);  // 穴の位置を設定
+        for (let x = startPosition; x < startPosition + hollLength; x++) {
+            if (x >= tmpField.length) {  // 領域外の場合は終了
                 break;
             }
+            tmpField[x] = -1;
         }
-    });
-
-    let pointIndex = 0;
-    latestHeight = field[field.length - 1];
-    let latestPoint = -1;
-    let slope = (tmpField[points[pointIndex]] - latestHeight) / (points[pointIndex] + 1);
-    for (let i = 0; i < BlockNum - 1; i++) {
-        if (tmpField[i] != undefined) {
-            latestPoint = points[pointIndex];
-            latestHeight = tmpField[latestPoint];
-
-            pointIndex++;
-
-            let x2 = points[pointIndex];
-            slope = (tmpField[x2] - latestHeight) / (x2 - latestPoint);
-            continue;
-        }
-
-        tmpField[i] = latestHeight + slope * (i - latestPoint);
     }
 
     field = field.concat(tmpField);
 }
 
 function JumpPressed() {
+    if (gameover) return;
     if (jumpNum <= 0) return;
+
     acceleration = JumpPower;
     playerState = PlayerState.Jump;
     jumpNum--;
+
+    if (volume != 0) {
+        JumpAudio = new Audio(JumpAudio.src);
+        JumpAudio.play();
+    }
 }
 
 function DrawScreen(array, playerPosition, time) {
@@ -156,7 +211,7 @@ function DrawScreen(array, playerPosition, time) {
     Context.clearRect(0, 0, Canvas.width, Canvas.height);
 
     // 鉛筆描画
-    Context.drawImage(Pencil, -0.5, -0.5, Canvas.width + 1, Canvas.height + 1);
+    //Context.drawImage(Pencil, -0.5, -0.5, Canvas.width + 1, Canvas.height + 1);
 
     // 境界線描画
     let data = array[0];
@@ -171,15 +226,10 @@ function DrawScreen(array, playerPosition, time) {
     }
 
     // 不必要な部分をクリア
-    Context.lineTo(XToCanvasPosition(-playerPosition.x + BlockNum + 1), -10);
-    Context.lineTo(XToCanvasPosition(-playerPosition.x), -10);
+    Context.lineTo(XToCanvasPosition(-playerPosition.x + BlockNum + 1), Canvas.height + 10);
+    Context.lineTo(XToCanvasPosition(-playerPosition.x), Canvas.height + 10);
     Context.closePath();
-    Context.globalCompositeOperation = "destination-out";
     Context.fill();
-    Context.globalCompositeOperation = "source-over";
-    Context.strokeStyle = "black";
-    Context.lineWidth = 5;
-    Context.stroke();
 
     // プレイヤー表示
     const playerSize = Canvas.width * 3 / 50;
@@ -291,6 +341,26 @@ async function SetRanking() {
     }
 }
 
+async function SendRanking() {
+    while (true) {
+        try {
+            //ランキング送信
+            let response = await fetch(location.origin + "/ranking", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "name": username, "distance": score })
+            });
+            if (!response.ok) throw new Error(response.statusText);
+            break;
+        } catch (e) {
+            if (!confirm("An error occured during sending score. Would you line to retry?\nランキング反映中にエラーが発生しました。リトライしますか？")) break;
+        }
+    }
+
+    // リロード
+    location.reload();
+}
+
 function SetUsername() {
     username = localStorage.getItem("username");
 
@@ -300,7 +370,7 @@ function SetUsername() {
 
 function GameStart() {
     username = document.getElementById("nameInput").value;
-    if (username == undefined) {
+    if (username == "") {
         alert("Enter your name.\nユーザー名を入力してください。");
         return;
     }
@@ -338,22 +408,104 @@ function GameStart() {
         requestAnimationFrame(Update);
         latestTime = performance.now();
         startTime = performance.now();
+        StartBGM();
 
     }, 1000);
 }
 
 function Resize() {
+    if (gameover) return;
+
     let width = window.innerWidth * 0.9;
     let height = window.innerHeight * 0.9;
 
     if (width / height > 9 / 16) {  // 横長なので高さを合わせる
-        Canvas.height = height;
-        Canvas.width = height * 9 / 16;
+        Canvas.height = height * 2;
+        Canvas.width = height * 9 / 16 * 2;
+
+        Canvas.style.height = height + "px";
+        Canvas.style.width = (height * 9 / 16) + "px";
     }
     else {
-        Canvas.width = width;
-        Canvas.height = width * 16 / 9;
+        Canvas.width = width * 2;
+        Canvas.height = width * 16 / 9 * 2;
+
+        Canvas.style.width = width + "px";
+        Canvas.style.height = (width * 16 / 9) + "px";
     }
+}
+
+function RandomRange(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function BGMLoaded() {
+    if (volume != 0) BGM.play();
+}
+
+function StartBGM() {
+    while (true) {
+        let num = Math.floor(RandomRange(0, BgmLength));
+        if (num != bgmNum) {
+            bgmNum = num;
+            BGM.src = BgmUrl.replace("N", num);
+            break;
+        }
+    }
+}
+
+function ChangeVolume() {
+    if (navigator.userAgent.match(/iPhone|Android.+Mobile/)) {
+        volume = volume == 0 ? 3 : 0;
+        if (volume == 3) alert("Enabling audio on smartphones may slow down the display speed.\nスマートフォンでは音声を有効にすることで表示速度が低下する可能性があります。");
+    }
+    else {
+        volume = (volume + 3) % 4;
+    }
+
+    localStorage.setItem("Volume", volume);
+    SetVolume();
+}
+
+function SetVolume() {
+    let volumeNumber = volume;
+    if (volumeNumber == 2) {
+        volumeNumber = 0.0464;
+    }
+    else if (volumeNumber == 1) {
+        volumeNumber = 0.0215;
+    }
+    else {
+        volumeNumber = Number(volume) / 3;
+    }
+
+    Audios.forEach(ad => {
+        ad.volume = volumeNumber;
+    })
+
+    document.getElementById("volumeImage").src = VolumeUrl.replace("N", volume);
+}
+
+function Death() {
+    BGM.pause();
+    if (volume != 0) DeathAudio.play();
+
+    // 爆発表示
+    for (let i = 0; i < Explosions.length; i++) {
+        setTimeout(() => {
+            Context.drawImage(Explosions[i], XToCanvasPosition(BikePosition) - ExplosionSize / 2, YToCanvasPosition(playerPosition.y) - ExplosionSize / 2, ExplosionSize, ExplosionSize);
+        }, i * ExplosionInterval * 1000);
+    }
+
+    // フェードアウト
+    setTimeout(() => {
+        Canvas.classList.remove("fadein");
+        Canvas.classList.add("fadeout");
+    }, 1000);
+
+    setTimeout(() => {
+        SendRanking();
+    }, 2000);
 }
 
 Start();

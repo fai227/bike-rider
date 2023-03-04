@@ -4,6 +4,11 @@
     src: url(./font.ttf);
 }
 
+html,
+body {
+    touch-action: manipulation;
+}
+
 body {
     background-color: #FEFFEF;
     background: linear-gradient(#D7D7C7 3px, transparent 1px);
@@ -29,7 +34,7 @@ body {
 }
 
 .smallFont {
-    font-size: 8vmin;
+    font-size: 6vmin;
 }
 
 #hr {
@@ -51,8 +56,6 @@ body {
 }
 
 canvas {
-    touch-action: none;
-
     background-image: url(./images/sun.png);
     background-position: right top;
     background-repeat: no-repeat;
@@ -87,12 +90,19 @@ canvas {
     background-size: cover;
 
     appearance: none;
+    -webkit-appearance: none;
     margin: 8vh 0;
 }
 
 #startButton:active {
     background-color: rgba(255, 255, 255, 0.2);
     background-blend-mode: lighten;
+}
+
+#volumeImage {
+    height: 5vh;
+
+    pointer-events: none
 }
 
 /* #endregion */
