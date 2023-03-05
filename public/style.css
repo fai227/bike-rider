@@ -4,11 +4,6 @@
     src: url(./font.ttf);
 }
 
-html,
-body {
-    touch-action: manipulation;
-}
-
 body {
     background-color: #FEFFEF;
     background: linear-gradient(#D7D7C7 3px, transparent 1px);

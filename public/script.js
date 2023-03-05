@@ -45,7 +45,7 @@ const MaxDif = 10;
 const MaxSlope = 0.5;
 const MaxDistance = 30;
 
-const MaxHallRatio = 2;
+const MaxHoleRatio = 3;
 
 // プレイヤーの状態
 const PlayerState = {
@@ -177,11 +177,12 @@ function GenerateField() {
 
     // 穴を空ける
     let level = Math.log10(score + 10);  // レベル
-    let holl = Math.random() * level;  // 穴の数を設定
-    for (let i = 0; i < holl; i++) {
-        let hollLength = Math.random() * level * MaxHallRatio;  // 穴の長さを設定
+    let hole = Math.ceil(Math.random() * level);  // 穴の数を設定
+    console.log(hole)
+    for (let i = 0; i < hole; i++) {
+        let holeLength = Math.random() * level * MaxHoleRatio;  // 穴の長さを設定
         let startPosition = Math.floor(Math.random() * tmpField.length);  // 穴の位置を設定
-        for (let x = startPosition; x < startPosition + hollLength; x++) {
+        for (let x = startPosition; x < startPosition + holeLength; x++) {
             if (x >= tmpField.length) {  // 領域外の場合は終了
                 break;
             }
@@ -201,7 +202,7 @@ function JumpPressed() {
     jumpNum--;
 
     if (volume != 0) {
-        JumpAudio = new Audio(JumpAudio.src);
+        JumpAudio.currentTime = 0;
         JumpAudio.play();
     }
 }
@@ -403,6 +404,7 @@ function GameStart() {
             if (e.key == " ") JumpPressed();
         });
         window.addEventListener("pointerdown", JumpPressed);
+        document.addEventListener("dblclick", function (e) { e.preventDefault(); }, { passive: false });
 
         // ゲーム開始
         requestAnimationFrame(Update);
