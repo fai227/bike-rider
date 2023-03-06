@@ -180,7 +180,6 @@ function GenerateField() {
     // 穴を空ける
     let level = Math.log10(score + 10);  // レベル
     let hole = Math.ceil(Math.random() * level);  // 穴の数を設定
-    console.log(hole)
     for (let i = 0; i < hole; i++) {
         let holeLength = Math.random() * level * MaxHoleRatio;  // 穴の長さを設定
         let startPosition = Math.floor(Math.random() * tmpField.length);  // 穴の位置を設定
@@ -341,10 +340,20 @@ async function SetRanking() {
             if (i == 1) distance.classList.add("second", "medal");
             if (i == 2) distance.classList.add("third", "medal");
         }
+
+        lowest = 0;
+        if (ranking.week.length == 10) lowest = ranking.week[ranking.week.length - 1];
     }
 }
 
 async function SendRanking() {
+    // 最下位より下なら実行しない
+    if (Number(lowest.distance) >= score) {
+        // リロード
+        location.reload();
+        return;
+    }
+
     while (true) {
         try {
             //ランキング送信
