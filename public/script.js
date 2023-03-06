@@ -77,6 +77,8 @@ async function Start() {
     playerPosition = { x: 0, y: 0 };
     playerState = PlayerState.Normal;
     score = 0;
+
+    alert("ランキングが1日ぐらいで消えちゃうことに気づいてしまったので、ちょっと修理します。\n多分URLも変わるので、もう少しお待ちください(´;ω;｀)");
 }
 
 function Update(time) {
