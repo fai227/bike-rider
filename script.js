@@ -1,3 +1,5 @@
+const RANKING_URL = "https://data-center.azurewebsites.net/bike-rider/"
+
 // canvas設定
 const Canvas = document.getElementById("canvas");
 const Context = Canvas.getContext("2d");
@@ -288,7 +290,7 @@ async function SetRanking() {
     headerRow.appendChild(totalHeader);
 
     //ランキング取得
-    let response = await fetch(location.origin + "/ranking");
+    let response = await fetch(RANKING_URL + "/ranking");
     let ranking = await response.json();
 
     // ランキング表示    
@@ -346,7 +348,7 @@ async function SendRanking() {
     while (true) {
         try {
             //ランキング送信
-            let response = await fetch(location.origin + "/ranking", {
+            let response = await fetch(RANKING_URL + "/ranking", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ "name": username, "distance": score })
