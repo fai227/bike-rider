@@ -110,11 +110,6 @@ function Update(time) {
         }
     }
 
-    if (gameover) {
-        Death();
-        return;
-    }
-
     // 上下移動計算
     if (playerState == PlayerState.Jump || playerState == PlayerState.Fall) {
         acceleration -= Gravity * deltaTime;
@@ -128,6 +123,14 @@ function Update(time) {
             playerPosition.y = field[BikePosition];
             playerState = PlayerState.Normal;
         }
+    }
+
+    // 死亡判定
+    if (playerPosition.y <= -1) gameover = true;
+
+    if (gameover) {
+        Death();
+        return;
     }
 
     // 表示計算
