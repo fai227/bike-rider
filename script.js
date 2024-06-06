@@ -1,4 +1,4 @@
-const RANKING_URL = "https://data-center.azurewebsites.net/bike-rider/"
+const RANKING_URL = "https://vvbasr6ub1.execute-api.ap-northeast-1.amazonaws.com/bike-rider"
 
 // canvas設定
 const Canvas = document.getElementById("canvas");
@@ -292,8 +292,12 @@ async function SetRanking() {
     headerRow.appendChild(totalHeader);
 
     //ランキング取得
-    let response = await fetch(RANKING_URL + "/ranking");
+    let response = await fetch(RANKING_URL);
     let ranking = await response.json();
+
+    // ソート
+    ranking.week.sort((a, b) => b.score - a.score);
+    ranking.total.sort((a, b) => b.score - a.score);
 
     // ランキング表示    
     for (let i = 0; i < Math.max(ranking.total.length, ranking.week.length); i++) {
@@ -314,7 +318,7 @@ async function SetRanking() {
 
             let distance = document.createElement("div");
             distance.classList.add("distance");
-            distance.append(document.createTextNode(data.distance + "M"));
+            distance.append(document.createTextNode(data.score + "M"));
             weekly.appendChild(distance);
 
             // メダル追加
@@ -335,7 +339,7 @@ async function SetRanking() {
 
             let distance = document.createElement("div");
             distance.classList.add("distance");
-            distance.append(document.createTextNode(data.distance + "M"));
+            distance.append(document.createTextNode(data.score + "M"));
             total.appendChild(distance);
 
             // メダル追加
@@ -351,7 +355,7 @@ async function SetRanking() {
 
 async function SendRanking() {
     // 最下位より下なら実行しない
-    if (Number(lowest.distance) >= score) {
+    if (Number(lowest.score) >= score) {
         // リロード
         location.reload();
         return;
@@ -360,10 +364,10 @@ async function SendRanking() {
     while (true) {
         try {
             //ランキング送信
-            let response = await fetch(RANKING_URL + "/ranking", {
+            let response = await fetch(RANKING_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "name": username, "distance": score })
+                body: JSON.stringify({ "name": username, "score": score })
             });
             if (!response.ok) throw new Error(response.statusText);
             break;
