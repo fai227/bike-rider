@@ -291,65 +291,75 @@ async function SetRanking() {
     totalHeader.classList.add("pencilBorder");
     headerRow.appendChild(totalHeader);
 
-    //ランキング取得
-    let response = await fetch(RANKING_URL);
-    let ranking = await response.json();
+    try {
+        //ランキング取得
+        let response = await fetch(RANKING_URL);
 
-    // ソート
-    ranking.week.sort((a, b) => b.score - a.score);
-    ranking.total.sort((a, b) => b.score - a.score);
-
-    // ランキング表示    
-    for (let i = 0; i < Math.max(ranking.total.length, ranking.week.length); i++) {
-        // 行追加
-        let row = document.createElement("tr");
-        table.appendChild(row);
-
-        // Weekly追加
-        let weekly = document.createElement("td");
-        weekly.classList.add("pencilBorder");
-        row.appendChild(weekly);
-        // スコア追加
-        if (ranking.week.length > i) {
-            let data = ranking.week[i];
-            let name = document.createElement("div");
-            name.append(document.createTextNode(`${i + 1}. ${data.name}`));
-            weekly.appendChild(name);
-
-            let distance = document.createElement("div");
-            distance.classList.add("distance");
-            distance.append(document.createTextNode(data.score + "M"));
-            weekly.appendChild(distance);
-
-            // メダル追加
-            if (i == 0) distance.classList.add("first", "medal");
-            if (i == 1) distance.classList.add("second", "medal");
-            if (i == 2) distance.classList.add("third", "medal");
+        // 成功ステータス以外が返ってきたときは例外発生
+        if (!response.ok) {
+            throw new Error(response.statusText);
         }
 
-        // Total追加
-        let total = document.createElement("td");
-        total.classList.add("pencilBorder");
-        row.appendChild(total);
-        if (ranking.total.length > i) {
-            let data = ranking.total[i];
-            let name = document.createElement("div");
-            name.append(document.createTextNode(`${i + 1}. ${data.name}`));
-            total.appendChild(name);
+        let ranking = await response.json();
 
-            let distance = document.createElement("div");
-            distance.classList.add("distance");
-            distance.append(document.createTextNode(data.score + "M"));
-            total.appendChild(distance);
+        // ソート
+        ranking.week.sort((a, b) => b.score - a.score);
+        ranking.total.sort((a, b) => b.score - a.score);
 
-            // メダル追加
-            if (i == 0) distance.classList.add("first", "medal");
-            if (i == 1) distance.classList.add("second", "medal");
-            if (i == 2) distance.classList.add("third", "medal");
+        // ランキング表示    
+        for (let i = 0; i < Math.max(ranking.total.length, ranking.week.length); i++) {
+            // 行追加
+            let row = document.createElement("tr");
+            table.appendChild(row);
+
+            // Weekly追加
+            let weekly = document.createElement("td");
+            weekly.classList.add("pencilBorder");
+            row.appendChild(weekly);
+            // スコア追加
+            if (ranking.week.length > i) {
+                let data = ranking.week[i];
+                let name = document.createElement("div");
+                name.append(document.createTextNode(`${i + 1}. ${data.name}`));
+                weekly.appendChild(name);
+
+                let distance = document.createElement("div");
+                distance.classList.add("distance");
+                distance.append(document.createTextNode(data.score + "M"));
+                weekly.appendChild(distance);
+
+                // メダル追加
+                if (i == 0) distance.classList.add("first", "medal");
+                if (i == 1) distance.classList.add("second", "medal");
+                if (i == 2) distance.classList.add("third", "medal");
+            }
+
+            // Total追加
+            let total = document.createElement("td");
+            total.classList.add("pencilBorder");
+            row.appendChild(total);
+            if (ranking.total.length > i) {
+                let data = ranking.total[i];
+                let name = document.createElement("div");
+                name.append(document.createTextNode(`${i + 1}. ${data.name}`));
+                total.appendChild(name);
+
+                let distance = document.createElement("div");
+                distance.classList.add("distance");
+                distance.append(document.createTextNode(data.score + "M"));
+                total.appendChild(distance);
+
+                // メダル追加
+                if (i == 0) distance.classList.add("first", "medal");
+                if (i == 1) distance.classList.add("second", "medal");
+                if (i == 2) distance.classList.add("third", "medal");
+            }
+
+            lowest = 0;
+            if (ranking.week.length == 10) lowest = ranking.week[ranking.week.length - 1];
         }
-
-        lowest = 0;
-        if (ranking.week.length == 10) lowest = ranking.week[ranking.week.length - 1];
+    } catch (e) {
+        alert("Fランキングデータの取得に失敗しました。\nこのままゲームを開始すると、ランキングにスコアが反映されない可能性があります。\n\nリロードしても改善しない場合は、お手数ですがお問い合わせください。");
     }
 }
 
