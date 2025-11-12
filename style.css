@@ -65,17 +65,6 @@ canvas {
     margin-bottom: 15vmin;
 }
 
-#nameInput {
-    background-color: #00000000;
-
-    width: 80vmin;
-    margin: 8vh 0;
-}
-
-#nameInput:focus {
-    outline: none;
-}
-
 #startButton {
     color: white;
 
@@ -86,7 +75,7 @@ canvas {
 
     appearance: none;
     -webkit-appearance: none;
-    margin: 8vh 0;
+    margin: 15vh 0;
 }
 
 #startButton:active {

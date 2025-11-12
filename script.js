@@ -1,12 +1,9 @@
-const RANKING_URL = "https://vvbasr6ub1.execute-api.ap-northeast-1.amazonaws.com/bike-rider"
-
 // canvas設定
 const Canvas = document.getElementById("canvas");
 const Context = Canvas.getContext("2d");
 
 // 画像読み込み
 const Sun = new Image(); Sun.src = "./images/sun.png";
-const Pencil = new Image(); Pencil.src = "./images/pencil.jpg";
 const Normal = new Image(); Normal.src = "./images/normal.png";
 const Jump = new Image(); Jump.src = "./images/jump.png";
 const Fall = new Image(); Fall.src = "./images/fall.png";
@@ -72,7 +69,6 @@ async function Start() {
     SetVolume();
 
     await SetRanking();  // ランキング表示
-    SetUsername();  // ユーザー名表示
 
     // 盤面初期化
     for (let i = 0; i < BlockNum * 3; i++) field.push(0);
@@ -215,9 +211,6 @@ function DrawScreen(array, playerPosition, time) {
     // 画面クリア
     Context.clearRect(0, 0, Canvas.width, Canvas.height);
 
-    // 鉛筆描画
-    //Context.drawImage(Pencil, -0.5, -0.5, Canvas.width + 1, Canvas.height + 1);
-
     // 境界線描画
     let data = array[0];
     Context.beginPath();
@@ -261,7 +254,6 @@ function DrawScreen(array, playerPosition, time) {
     Context.fillStyle = "black";
     Context.textAlign = "right";
     Context.fillText(score + "M", 150, 50, 100);
-
 }
 
 function XToCanvasPosition(value) {
@@ -281,142 +273,53 @@ async function SetRanking() {
     let headerRow = document.createElement("tr");
     table.appendChild(headerRow);
 
-    let weeklyHeader = document.createElement("th");
-    weeklyHeader.appendChild(document.createTextNode("Weekly"));
-    weeklyHeader.classList.add("pencilBorder");
-    headerRow.appendChild(weeklyHeader);
+    const rankingData = [
+        { "name": "Rs", "score": 31025 },
+        { "name": "Ra", "score": 29837 },
+        { "name": "Rs", "score": 29146 },
+        { "name": "Mori", "score": 26832 },
+        { "name": "Rs", "score": 26806 },
+        { "name": "Rs", "score": 26443 },
+        { "name": "Mori", "score": 25516 },
+        { "name": "Rs", "score": 25038 },
+        { "name": "Rs", "score": 24861 },
+        { "name": "Rs", "score": 24201 }
+    ];
 
-    let totalHeader = document.createElement("th");
-    totalHeader.appendChild(document.createTextNode("Total"));
-    totalHeader.classList.add("pencilBorder");
-    headerRow.appendChild(totalHeader);
+    // ランキング表示    
+    for (let i = 0; i < rankingData.length; i++) {
+        // 行追加
+        let row = document.createElement("tr");
+        table.appendChild(row);
 
-    try {
-        //ランキング取得
-        let response = await fetch(RANKING_URL);
+        let total = document.createElement("td");
+        total.classList.add("pencilBorder");
+        row.appendChild(total);
 
-        // 成功ステータス以外が返ってきたときは例外発生
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
+        let data = rankingData[i];
+        let name = document.createElement("div");
+        name.append(document.createTextNode(`${i + 1}. ${data.name}`));
+        total.appendChild(name);
 
-        let ranking = await response.json();
+        let distance = document.createElement("div");
+        distance.classList.add("distance");
+        distance.append(document.createTextNode(data.score + "M"));
+        total.appendChild(distance);
 
-        // ソート
-        ranking.week.sort((a, b) => b.score - a.score);
-        ranking.total.sort((a, b) => b.score - a.score);
-
-        // ランキング表示    
-        for (let i = 0; i < Math.max(ranking.total.length, ranking.week.length); i++) {
-            // 行追加
-            let row = document.createElement("tr");
-            table.appendChild(row);
-
-            // Weekly追加
-            let weekly = document.createElement("td");
-            weekly.classList.add("pencilBorder");
-            row.appendChild(weekly);
-            // スコア追加
-            if (ranking.week.length > i) {
-                let data = ranking.week[i];
-                let name = document.createElement("div");
-                name.append(document.createTextNode(`${i + 1}. ${data.name}`));
-                weekly.appendChild(name);
-
-                let distance = document.createElement("div");
-                distance.classList.add("distance");
-                distance.append(document.createTextNode(data.score + "M"));
-                weekly.appendChild(distance);
-
-                // メダル追加
-                if (i == 0) distance.classList.add("first", "medal");
-                if (i == 1) distance.classList.add("second", "medal");
-                if (i == 2) distance.classList.add("third", "medal");
-            }
-
-            // Total追加
-            let total = document.createElement("td");
-            total.classList.add("pencilBorder");
-            row.appendChild(total);
-            if (ranking.total.length > i) {
-                let data = ranking.total[i];
-                let name = document.createElement("div");
-                name.append(document.createTextNode(`${i + 1}. ${data.name}`));
-                total.appendChild(name);
-
-                let distance = document.createElement("div");
-                distance.classList.add("distance");
-                distance.append(document.createTextNode(data.score + "M"));
-                total.appendChild(distance);
-
-                // メダル追加
-                if (i == 0) distance.classList.add("first", "medal");
-                if (i == 1) distance.classList.add("second", "medal");
-                if (i == 2) distance.classList.add("third", "medal");
-            }
-
-            lowest = 0;
-            if (ranking.week.length == 10) lowest = ranking.week[ranking.week.length - 1];
-        }
-    } catch (e) {
-        alert("Fランキングデータの取得に失敗しました。\nこのままゲームを開始すると、ランキングにスコアが反映されない可能性があります。\n\nリロードしても改善しない場合は、お手数ですがお問い合わせください。");
+        // メダル追加
+        if (i == 0) distance.classList.add("first", "medal");
+        if (i == 1) distance.classList.add("second", "medal");
+        if (i == 2) distance.classList.add("third", "medal");
     }
-}
-
-async function SendRanking() {
-    // 最下位より下なら実行しない
-    if (Number(lowest.score) >= score) {
-        // リロード
-        location.reload();
-        return;
-    }
-
-    while (true) {
-        try {
-            //ランキング送信
-            let response = await fetch(RANKING_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "name": username, "score": score })
-            });
-            if (!response.ok) throw new Error(response.statusText);
-            break;
-        } catch (e) {
-            if (!confirm("An error occured during sending score. Would you line to retry?\nランキング反映中にエラーが発生しました。リトライしますか？")) break;
-        }
-    }
-
-    // リロード
-    location.reload();
-}
-
-function SetUsername() {
-    username = localStorage.getItem("username");
-
-    if (username != undefined)
-        document.getElementById("nameInput").value = username;
 }
 
 function GameStart() {
-    username = document.getElementById("nameInput").value;
-    if (username == "") {
-        alert("Enter your name.\nユーザー名を入力してください。");
-        return;
-    }
-    if (!username.match(/^[A-Za-z0-9]*$/)) {
-        alert("ユーザー名は英数字のみで入力してください。")
-        return;
-    }
-
-    localStorage.setItem("username", username);
-
     // Fade Out
     document.getElementById("startButton").disabled = true;
 
     document.getElementById("wrapper").classList.add("fadeout");
     setTimeout(() => {
         document.getElementById("wrapper").style.display = "none";
-
 
         // Canvas設定
         window.addEventListener("resize", Resize);
@@ -534,7 +437,7 @@ function Death() {
     }, 1000);
 
     setTimeout(() => {
-        SendRanking();
+        location.reload();
     }, 2000);
 }
 
